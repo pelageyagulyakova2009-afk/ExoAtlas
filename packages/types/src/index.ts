@@ -22,6 +22,7 @@ export interface PlanetParams {
   cloudCoverage: number;
   atmosphereDensity: number;
   axialTilt: number;
+  useEarth: number;
 }
 
 export interface GalaxyParams {
@@ -30,6 +31,8 @@ export interface GalaxyParams {
   pitchAngle: number;
   coreSize: number;
   dustDensity: number;
+  bar: number;
+  patternSpeed: number;
 }
 
 export interface ForgeObject {

@@ -7,9 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Cube-sphere LOD with skirts, ported terrain, atmosphere, clouds, water, and NASA Earth maps.
-- Density-wave galaxy with 100k stars, dust, H II, and named presets.
-- Dark instrument UI: presets, accordions, working next/submit, FPS, fullscreen, PNG.
+- Cube-sphere LOD with skirts, ported terrain, atmosphere, clouds, water, and NASA Earth maps. `b6cb6db`
+- Density-wave galaxy with 100k stars, dust, H II, and named presets. `b0c41e8`
+- Dark instrument UI: presets, accordions, working next/submit, FPS, fullscreen, PNG. `afb3eb4`
 
 ## [1.0.0] - 2026-10-01
 
