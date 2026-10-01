@@ -1,0 +1,19 @@
+[project]
+name = "exoforge-ml"
+version = "0.0.1"
+description = "ExoForge encoder, linear probe, and acquisition interfaces"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn>=0.34.0",
+  "numpy>=2.0.0",
+  "pydantic>=2.10.0",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.5.0", "torchvision>=0.20.0"]
+clip = ["open-clip-torch>=2.29.0", "pillow>=10.0.0"]
+dev = ["pytest>=8.3.0", "httpx>=0.28.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
