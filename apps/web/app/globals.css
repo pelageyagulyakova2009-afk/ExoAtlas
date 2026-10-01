@@ -4,7 +4,8 @@
 
 html,
 body {
-  background: #070b14;
+  background: #0a0a0f;
   color: #e8eef8;
   min-height: 100%;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }

@@ -1,39 +1,19 @@
 'use client';
 
-import {
-  FEATURE_TAGS,
-  type FeatureTag,
-  type ForgeObject,
-} from '@exoforge/types';
-import { useEffect, useState } from 'react';
+import { FEATURE_TAGS } from '@exoforge/types';
+import { useEffect } from 'react';
+import { LabeledSlider } from '@/components/ui/Controls';
+import { usePlanetStore } from '@/lib/planet/store';
 import { createSupabaseBrowser } from '@/lib/supabase/browser';
 
-export function LabelPanel({
-  objectHint,
-}: {
-  objectHint: ForgeObject['type'];
-}) {
-  const [objectId, setObjectId] = useState<string | null>(null);
-  const [attention, setAttention] = useState(false);
-  const [tags, setTags] = useState<FeatureTag[]>([]);
-  const [confidence, setConfidence] = useState(0.7);
-  const [message, setMessage] = useState(
-    'Load the next object, then mark what you see.',
-  );
-
-  async function loadNext() {
-    const response = await fetch('/api/objects/next', { method: 'POST' });
-    if (!response.ok) {
-      setMessage('Queue is empty.');
-      setObjectId(null);
-      return;
-    }
-    const body = await response.json();
-    setObjectId(body.object.id);
-    setAttention(Boolean(body.attentionCheck));
-    setTags([]);
-    setMessage(`${body.object.type} seed ${body.object.seed}`);
-  }
+export function LabelPanel() {
+  const tags = usePlanetStore((s) => s.tags);
+  const confidence = usePlanetStore((s) => s.confidence);
+  const toast = usePlanetStore((s) => s.toast);
+  const toggleTag = usePlanetStore((s) => s.toggleTag);
+  const setConfidence = usePlanetStore((s) => s.setConfidence);
+  const setToast = usePlanetStore((s) => s.setToast);
+  const setSeed = usePlanetStore((s) => s.setSeed);
 
   useEffect(() => {
     const client = createSupabaseBrowser();
@@ -44,17 +24,38 @@ export function LabelPanel({
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'labels' },
         () => {
-          setMessage('A new label arrived.');
+          setToast('A new label arrived.');
         },
       )
       .subscribe();
     return () => {
       void client.removeChannel(channel);
     };
-  }, []);
+  }, [setToast]);
+
+  async function nextObject() {
+    const response = await fetch('/api/objects/next', { method: 'POST' });
+    if (!response.ok) {
+      setToast('Queue is empty.');
+      return;
+    }
+    const body = await response.json();
+    setSeed(body.object.seed);
+    setToast(`Loaded seed ${body.object.seed}.`);
+  }
 
   async function submit() {
-    if (!objectId) return;
+    if (tags.length === 0) {
+      setToast('Choose at least one tag.');
+      return;
+    }
+    const next = await fetch('/api/objects/next', { method: 'POST' });
+    const queued = next.ok ? await next.json() : null;
+    const objectId = queued?.object?.id;
+    if (!objectId) {
+      setToast('No object to label.');
+      return;
+    }
     const response = await fetch('/api/labels', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -65,76 +66,59 @@ export function LabelPanel({
         confidence,
       }),
     });
-    const body = await response.json();
     if (!response.ok) {
-      setMessage(body.error ?? 'Submit failed');
+      setToast('Submit failed.');
       return;
     }
-    const check =
-      body.attentionPassed === null
-        ? ''
-        : body.attentionPassed
-          ? ' Attention check passed.'
-          : ' Attention check failed.';
-    setMessage(`Saved.${check}`);
-    setObjectId(null);
+    setToast('Label saved.');
+    usePlanetStore.setState({ tags: [] });
   }
 
   return (
-    <section className="space-y-3 border-t border-slate-800 pt-4">
-      <h2 className="font-medium">Annotate ({objectHint})</h2>
-      <p className="text-slate-400">{message}</p>
-      {attention ? (
-        <p className="text-amber-300">
-          Attention check: include the known features.
-        </p>
-      ) : null}
-      <button
-        type="button"
-        className="rounded bg-slate-700 px-3 py-1"
-        onClick={() => void loadNext()}
-      >
-        Next object
-      </button>
-      <ul className="space-y-1">
+    <section className="space-y-3">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="rounded-lg bg-[#4a9eff] px-3 py-2 text-sm font-medium text-black hover:brightness-110"
+          onClick={() => void nextObject()}
+        >
+          Next object
+        </button>
+        <button
+          type="button"
+          className="rounded-lg border border-white/15 px-3 py-2 text-sm hover:bg-white/10"
+          onClick={() => void submit()}
+        >
+          Submit
+        </button>
+      </div>
+      <ul className="grid grid-cols-2 gap-1 text-sm">
         {FEATURE_TAGS.map((tag) => (
           <li key={tag}>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-white/5">
               <input
                 type="checkbox"
                 checked={tags.includes(tag)}
-                onChange={(event) => {
-                  setTags((current) =>
-                    event.target.checked
-                      ? [...current, tag]
-                      : current.filter((item) => item !== tag),
-                  );
-                }}
+                onChange={() => toggleTag(tag)}
               />
               {tag}
             </label>
           </li>
         ))}
       </ul>
-      <label className="block">
-        Confidence {confidence.toFixed(2)}
-        <input
-          className="w-full"
-          type="range"
-          min={0}
-          max={1}
-          step={0.05}
-          value={confidence}
-          onChange={(event) => setConfidence(Number(event.target.value))}
-        />
-      </label>
-      <button
-        type="button"
-        className="rounded bg-accent px-3 py-1 text-ink"
-        onClick={() => void submit()}
-      >
-        Submit
-      </button>
+      <LabeledSlider
+        label="Confidence"
+        min={0}
+        max={1}
+        step={0.05}
+        value={confidence}
+        onChange={setConfidence}
+      />
+      {toast ? (
+        <p className="rounded-lg bg-sky-950 px-3 py-2 text-sm text-sky-100">
+          {toast}
+        </p>
+      ) : null}
     </section>
   );
 }
