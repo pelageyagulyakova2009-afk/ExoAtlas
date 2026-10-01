@@ -1,13 +1,16 @@
 /**
- * Density-wave spiral.
- * Lin & Shu 1964, "On the Spiral Structure of Disk Galaxies".
- * Inspired by sugaith/react-three-fiber-shader-galaxy (particle layout)
- * and N0rvel/galaxy_sim (disk kinematics, not copied).
- * The dispersion relation is TODO(manual) (R1).
+ * Ported from: Lin & Shu 1964, logarithmic spiral phase ln(r) / tan(pitch).
+ * The numeric form used on the CPU is armAngle() in galaxy.ts.
+ * Original authors: C.C. Lin, Frank Shu.
+ * License: published theory.
+ * Adaptations: GLSL twin of the CPU phase, kept for the shader pack.
  */
 export const densityWaveGlsl = /* glsl */ `
 float armDensity(vec2 disk, float arms, float pitch) {
-  // TODO(manual): logarithmic spiral phase from Lin-Shu density wave.
-  return 0.0;
+  float radius = max(length(disk), 0.02);
+  float theta = atan(disk.y, disk.x);
+  float phase = theta - log(radius) / max(tan(pitch), 0.05);
+  float arm = cos(phase * arms);
+  return arm * arm;
 }
 `;

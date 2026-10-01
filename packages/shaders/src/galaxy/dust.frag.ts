@@ -1,11 +1,15 @@
-/** Dust lanes. Alpha blend is a placeholder; optical depth is TODO(manual). */
+/**
+ * Dust lanes sit on the inner edge of the density wave.
+ * Ported from: the dark-lane look of spiral galaxies; particles are placed in galaxy.ts.
+ * Original author: n/a. Shader is ExoForge code.
+ * License: project code.
+ * Adaptations: brown alpha sprite.
+ */
 export const dustFrag = /* glsl */ `
 uniform float uDustDensity;
-varying float vAge;
 void main() {
-  // TODO(manual): dust extinction along spiral arms.
   vec2 uv = gl_PointCoord * 2.0 - 1.0;
   if (dot(uv, uv) > 1.0) discard;
-  gl_FragColor = vec4(0.35, 0.22, 0.12, uDustDensity * 0.35);
+  gl_FragColor = vec4(0.28, 0.16, 0.08, 0.45 * uDustDensity);
 }
 `;

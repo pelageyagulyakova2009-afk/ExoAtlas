@@ -1,7 +1,7 @@
 'use client';
 
 import { GalaxyControls } from '@/components/galaxy/GalaxyControls';
-import { GalaxyScene } from '@/components/galaxy/GalaxyScene';
+import { GalaxyCanvas } from '@/components/galaxy/GalaxyScene';
 import { useGalaxyStore } from '@/lib/galaxy/store';
 import { useEffect } from 'react';
 
@@ -14,7 +14,7 @@ export default function GalaxyPage({ params }: { params: { seed: string } }) {
   return (
     <div className="flex h-[calc(100vh-49px)]">
       <div className="min-w-0 flex-1">
-        <GalaxyScene />
+        <GalaxyCanvas />
       </div>
       <GalaxyControls seed={seed} />
     </div>

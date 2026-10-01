@@ -1,20 +1,35 @@
 'use client';
 
-import { LabelPanel } from '@/components/annotate/LabelPanel';
 import { useRouter } from 'next/navigation';
+import { LabelPanel } from '@/components/annotate/LabelPanel';
+import { LabeledSlider, Section } from '@/components/ui/Controls';
+import { GALAXY_PRESETS } from '@/lib/galaxy/params';
 import { useGalaxyStore } from '@/lib/galaxy/store';
 
 export function GalaxyControls({ seed }: { seed: number }) {
   const params = useGalaxyStore((s) => s.params);
+  const preset = useGalaxyStore((s) => s.preset);
   const setParam = useGalaxyStore((s) => s.setParam);
   const setSeed = useGalaxyStore((s) => s.setSeed);
+  const applyPreset = useGalaxyStore((s) => s.applyPreset);
   const router = useRouter();
   return (
-    <aside className="w-72 space-y-3 border-l border-slate-800 bg-panel p-4 text-sm">
-      <label className="block">
-        Seed
+    <aside className="w-80 space-y-3 overflow-y-auto border-l border-white/10 bg-[#0a0a0f]/95 p-4">
+      <label className="block text-xs">
+        Preset
+        <select
+          className="mt-1 w-full rounded-lg bg-black px-2 py-2"
+          value={preset}
+          onChange={(e) => applyPreset(e.target.value)}
+        >
+          {Object.keys(GALAXY_PRESETS).map((name) => (
+            <option key={name}>{name}</option>
+          ))}
+        </select>
+      </label>
+      <Section title="Seed">
         <input
-          className="mt-1 w-full rounded bg-ink px-2 py-1"
+          className="w-full rounded-lg bg-black px-2 py-2"
           defaultValue={seed}
           type="number"
           onBlur={(event) => {
@@ -23,60 +38,58 @@ export function GalaxyControls({ seed }: { seed: number }) {
             router.push(`/galaxy/${next}`);
           }}
         />
-      </label>
-      <label className="block">
-        Arms {params.arms}
-        <input
-          className="w-full"
-          type="range"
+      </Section>
+      <Section title="Disk">
+        <LabeledSlider
+          label="Arms"
           min={2}
           max={6}
           step={1}
           value={params.arms}
-          onChange={(event) => setParam('arms', Number(event.target.value))}
+          onChange={(v) => setParam('arms', v)}
         />
-      </label>
-      <label className="block">
-        Pitch angle {params.pitchAngle.toFixed(2)}
-        <input
-          className="w-full"
-          type="range"
-          min={0.08}
-          max={0.8}
+        <LabeledSlider
+          label="Pitch"
+          min={0.12}
+          max={0.52}
           step={0.01}
           value={params.pitchAngle}
-          onChange={(event) =>
-            setParam('pitchAngle', Number(event.target.value))
-          }
+          onChange={(v) => setParam('pitchAngle', v)}
         />
-      </label>
-      <label className="block">
-        Core size {params.coreSize.toFixed(2)}
-        <input
-          className="w-full"
-          type="range"
-          min={0.02}
-          max={0.4}
+        <LabeledSlider
+          label="Core"
+          min={0.04}
+          max={0.3}
           step={0.01}
           value={params.coreSize}
-          onChange={(event) => setParam('coreSize', Number(event.target.value))}
+          onChange={(v) => setParam('coreSize', v)}
         />
-      </label>
-      <label className="block">
-        Dust density {params.dustDensity.toFixed(2)}
-        <input
-          className="w-full"
-          type="range"
+        <LabeledSlider
+          label="Dust"
           min={0}
           max={1}
           step={0.01}
           value={params.dustDensity}
-          onChange={(event) =>
-            setParam('dustDensity', Number(event.target.value))
-          }
+          onChange={(v) => setParam('dustDensity', v)}
         />
-      </label>
-      <LabelPanel objectHint="galaxy" />
+        <LabeledSlider
+          label="Bar"
+          min={0}
+          max={1}
+          step={1}
+          value={params.bar}
+          onChange={(v) => setParam('bar', v)}
+        />
+        <LabeledSlider
+          label="Pattern speed"
+          min={0}
+          max={1}
+          step={0.01}
+          value={params.patternSpeed}
+          onChange={(v) => setParam('patternSpeed', v)}
+        />
+      </Section>
+      <LabelPanel />
     </aside>
   );
 }

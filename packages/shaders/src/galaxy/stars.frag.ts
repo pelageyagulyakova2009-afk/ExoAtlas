@@ -1,12 +1,15 @@
-/** Age-to-color mapping is TODO(manual). */
+/**
+ * Ported from: stellar color already computed on the CPU via Tanner Helland.
+ * Original author: Tanner Helland (CPU). This fragment only draws the point sprite.
+ * License: approximation is published on his site; shader is ExoForge code.
+ * Adaptations: circular point, no extra blackbody in GLSL.
+ */
 export const starsFrag = /* glsl */ `
-varying float vAge;
+varying vec3 vColor;
 void main() {
-  // TODO(manual): blackbody-ish color from stellar age.
-  vec3 young = vec3(0.7, 0.8, 1.0);
-  vec3 old = vec3(1.0, 0.75, 0.45);
   vec2 uv = gl_PointCoord * 2.0 - 1.0;
-  if (dot(uv, uv) > 1.0) discard;
-  gl_FragColor = vec4(mix(young, old, vAge), 0.9);
+  float d = dot(uv, uv);
+  if (d > 1.0) discard;
+  gl_FragColor = vec4(vColor, 0.9 * (1.0 - d));
 }
 `;
