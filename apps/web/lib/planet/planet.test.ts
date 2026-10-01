@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { PLANET_PRESETS } from './presets';
 import { buildPatch, edgePositions, selectPatches } from './lod';
 import { seedToParams } from './params';
+import { usePlanetStore } from './store';
 
 describe('seedToParams', () => {
   it('is deterministic', () => {
@@ -23,6 +25,14 @@ describe('cube-sphere LOD', () => {
         expect(Math.abs(value - b[index][axis])).toBeLessThan(1e-6);
       });
     });
+  });
+
+  it('applies an Earth preset across every field', () => {
+    usePlanetStore.getState().applyPreset('Earth-like');
+    expect(usePlanetStore.getState().params.useEarth).toBe(1);
+    expect(usePlanetStore.getState().params.cloudCoverage).toBe(
+      PLANET_PRESETS['Earth-like'].cloudCoverage,
+    );
   });
 
   it('covers every face when the camera is far', () => {

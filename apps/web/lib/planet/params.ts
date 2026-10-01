@@ -22,5 +22,6 @@ export function seedToParams(seed: number): PlanetParams {
     cloudCoverage: 0.2 + rand() * 0.6,
     atmosphereDensity: 0.4 + rand() * 0.6,
     axialTilt: (rand() - 0.5) * 0.6,
+    useEarth: 0,
   };
 }
