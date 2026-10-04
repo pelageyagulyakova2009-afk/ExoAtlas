@@ -7,7 +7,7 @@
  * Maxime Heckel, "On Rendering the Sky, Sunsets, and Planets".
  * Original authors: Eric Bruneton, Fabrice Neyret.
  * License: equations from the paper; this march is ExoForge code.
- * Adaptations: 8 view samples, no transmittance LUT.
+ * Adaptations: 16 samples along the view ray, no transmittance LUT.
  * TODO(manual): full Bruneton 4D lookup tables.
  */
 export const atmosphereFrag = /* glsl */ `
@@ -26,16 +26,24 @@ float phaseMie(float cosTheta) {
   return 0.1193662 * (1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5);
 }
 void main() {
-  vec3 n = normalize(vWorld);
+  vec3 rd = normalize(vWorld - cameraPosition);
   vec3 sun = normalize(uSun);
-  float mu = dot(n, sun);
+  float mu = dot(rd, sun);
   float ray = phaseRayleigh(mu);
   float mie = phaseMie(mu);
-  float height = pow(max(n.y * 0.5 + 0.5, 0.0), 0.35);
-  vec3 optical = exp(-(betaR + betaM + betaO) * (1.4 - height) * 8.0);
-  vec3 scatter = (betaR * ray + vec3(betaM) * mie) * (1.0 - optical);
-  scatter *= uAtmosphereDensity;
-  float limb = pow(1.0 - abs(n.z), 1.6);
-  gl_FragColor = vec4(scatter, clamp(limb * uAtmosphereDensity, 0.0, 0.9));
+  vec3 scatter = vec3(0.0);
+  vec3 transmit = vec3(1.0);
+  const int STEPS = 16;
+  float dt = 0.2 / float(STEPS);
+  for (int i = 0; i < STEPS; i++) {
+    vec3 p = mix(cameraPosition, vWorld, float(i) / float(STEPS - 1));
+    float height = max(length(p) - 1.0, 0.0);
+    float dens = exp(-height * 14.0) * uAtmosphereDensity;
+    vec3 stepBeta = (betaR + vec3(betaM) + betaO) * dens;
+    transmit *= exp(-stepBeta * dt);
+    scatter += transmit * dens * (betaR * ray + vec3(betaM) * mie) * dt;
+  }
+  float alpha = clamp(1.0 - transmit.b, 0.0, 0.9);
+  gl_FragColor = vec4(scatter * 4.0, alpha);
 }
 `;

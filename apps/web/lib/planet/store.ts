@@ -30,7 +30,7 @@ export const usePlanetStore = create<PlanetState>((set, get) => ({
   params: { ...seedToParams(42), ...PLANET_PRESETS['Earth-like'] },
   preset: 'Earth-like',
   time: 0,
-  lodLevel: 3,
+  lodLevel: 5,
   tags: [],
   confidence: 0.7,
   toast: '',

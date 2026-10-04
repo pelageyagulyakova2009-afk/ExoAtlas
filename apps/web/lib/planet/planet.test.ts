@@ -35,6 +35,11 @@ describe('cube-sphere LOD', () => {
     );
   });
 
+  it('splits past level 3 when the camera is close', () => {
+    const patches = selectPatches(1.2, 5);
+    expect(patches.some((patch) => patch.level >= 3)).toBe(true);
+  });
+
   it('covers every face when the camera is far', () => {
     const patches = selectPatches(8, 3);
     const faces = new Set(patches.map((patch) => patch.face));

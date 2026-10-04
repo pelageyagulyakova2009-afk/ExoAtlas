@@ -4,13 +4,14 @@ import { dustFrag, starsFrag, starsVert } from '@exoforge/shaders';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useMemo, useRef, useState } from 'react';
+import { AdditiveBlending, MultiplyBlending, NoToneMapping } from 'three';
 import { buildGalaxyBuffers } from '@/lib/galaxy/params';
 import { useGalaxyStore } from '@/lib/galaxy/store';
 
 const dustVert = /* glsl */ `
 void main() {
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
-  gl_PointSize = 3.0 * (6.0 / -mv.z);
+  gl_PointSize = 1.4 * (4.0 / -mv.z);
   gl_Position = projectionMatrix * mv;
 }
 `;
@@ -20,7 +21,8 @@ void main() {
   vec2 uv = gl_PointCoord * 2.0 - 1.0;
   float d = dot(uv, uv);
   if (d > 1.0) discard;
-  gl_FragColor = vec4(1.0, 0.35, 0.55, 0.75 * (1.0 - d));
+  float core = smoothstep(1.0, 0.4, d);
+  gl_FragColor = vec4(1.0, 0.25, 0.55, core);
 }
 `;
 
@@ -43,6 +45,7 @@ function Stars() {
         <shaderMaterial
           transparent
           depthWrite={false}
+          blending={AdditiveBlending}
           vertexShader={starsVert}
           fragmentShader={starsFrag}
         />
@@ -57,6 +60,7 @@ function Stars() {
         <shaderMaterial
           transparent
           depthWrite={false}
+          blending={MultiplyBlending}
           uniforms={{ uDustDensity: { value: params.dustDensity } }}
           vertexShader={dustVert}
           fragmentShader={dustFrag}
@@ -72,13 +76,16 @@ function Stars() {
         <shaderMaterial
           transparent
           depthWrite={false}
+          blending={AdditiveBlending}
           vertexShader={dustVert}
           fragmentShader={hiiFrag}
         />
       </points>
-      <mesh>
-        <sphereGeometry args={[params.coreSize * 0.15, 16, 16]} />
-        <meshBasicMaterial color="#fff4d2" />
+      <mesh renderOrder={2}>
+        <sphereGeometry
+          args={[Math.max(0.02, params.coreSize * 0.08), 16, 16]}
+        />
+        <meshBasicMaterial color="#fffaf0" />
       </mesh>
     </group>
   );
@@ -90,8 +97,8 @@ export function GalaxyCanvas() {
   return (
     <div className="relative h-full w-full">
       <Canvas
-        gl={{ preserveDrawingBuffer: true }}
-        camera={{ position: [0, 1.2, 1.6], fov: 50 }}
+        gl={{ preserveDrawingBuffer: true, toneMapping: NoToneMapping }}
+        camera={{ position: [0, 1.6, 2.2], fov: 50 }}
         onCreated={({ gl }) => {
           setCanvas(gl.domElement);
         }}
@@ -99,7 +106,12 @@ export function GalaxyCanvas() {
         <color attach="background" args={['#05060c']} />
         <Fps onFrame={setFps} />
         <Stars />
-        <OrbitControls enableDamping enablePan={false} />
+        <OrbitControls
+          enableDamping
+          enablePan={false}
+          minDistance={0.8}
+          maxDistance={6}
+        />
       </Canvas>
       <div className="absolute right-4 top-4 flex gap-2 text-xs">
         <span className="rounded-lg bg-black/50 px-2 py-1">{fps} FPS</span>

@@ -83,7 +83,7 @@ export function buildPatch(id: PatchId, segments = 16): MeshPatch {
       indexList.push(a, a + verts, a + 1, a + 1, a + verts, a + verts + 1);
     }
   }
-  const skirt = 0.985;
+  const skirt = 0.998;
   const pushSkirt = (i0: number, j0: number, i1: number, j1: number) => {
     const a = at(i0, j0);
     const b = at(i1, j1);

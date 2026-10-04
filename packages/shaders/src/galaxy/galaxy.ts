@@ -77,12 +77,12 @@ export function buildGalaxyBuffers(params: GalaxyBuild, count = STAR_COUNT) {
   for (let i = 0; i < count; i += 1) {
     const radius = Math.min(1, -Math.log(1 - rand() * 0.98) * 0.28);
     const arm = Math.floor(rand() * params.arms);
-    const onArm = rand() < 0.55 + 0.2 * (1 - radius);
+    const onArm = rand() < 0.82;
     const theta = onArm
       ? armAngle(radius, arm, params.arms, params.pitchAngle) +
         params.patternSpeed
       : rand() * Math.PI * 2;
-    const jitter = (rand() - 0.5) * (onArm ? 0.035 : 0.12);
+    const jitter = (rand() - 0.5) * (onArm ? 0.02 : 0.04);
     let x = Math.cos(theta) * radius + jitter;
     let z = Math.sin(theta) * radius + jitter;
     if (params.bar > 0.5 && radius < params.coreSize * 1.8) {

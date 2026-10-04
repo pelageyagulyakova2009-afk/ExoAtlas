@@ -8,27 +8,50 @@ import {
 } from '@exoforge/shaders';
 import { OrbitControls, useTexture } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useMemo, useRef, useState } from 'react';
-import type { Mesh } from 'three';
-import { buildPatch, selectPatches } from '@/lib/planet/lod';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  LinearFilter,
+  LinearMipmapLinearFilter,
+  NoToneMapping,
+  SRGBColorSpace,
+  type Mesh,
+  type Texture,
+} from 'three';
+import { buildPatch, MAX_LOD, selectPatches } from '@/lib/planet/lod';
 import { usePlanetStore } from '@/lib/planet/store';
 
 function Patches() {
   const params = usePlanetStore((s) => s.params);
   const lodLevel = usePlanetStore((s) => s.lodLevel);
   const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
   const [day, night] = useTexture([
     '/textures/earth-day.jpg',
     '/textures/earth-night.jpg',
   ]);
-  const distance = camera.position.length();
+  const [distance, setDistance] = useState(() => camera.position.length());
+  useEffect(() => {
+    for (const map of [day, night] as Texture[]) {
+      map.generateMipmaps = true;
+      map.minFilter = LinearMipmapLinearFilter;
+      map.magFilter = LinearFilter;
+      map.anisotropy = gl.capabilities.getMaxAnisotropy();
+      map.colorSpace = SRGBColorSpace;
+      map.needsUpdate = true;
+    }
+  }, [day, night, gl]);
   const patches = useMemo(
-    () => selectPatches(distance, lodLevel).map((id) => buildPatch(id, 12)),
+    () =>
+      selectPatches(distance, Math.min(lodLevel, MAX_LOD)).map((id) =>
+        buildPatch(id, 12),
+      ),
     [distance, lodLevel],
   );
   useFrame((_, delta) => {
     const state = usePlanetStore.getState();
     state.setTime(state.time + delta);
+    const next = camera.position.length();
+    setDistance((prev) => (Math.abs(prev - next) > 0.15 ? next : prev));
   });
   const sun = [1, 0.35, 0.15] as const;
   return (
@@ -90,7 +113,7 @@ function Shell({
         args={[
           {
             uniforms,
-            vertexShader: `varying vec3 vWorld; void main(){ vWorld = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+            vertexShader: `varying vec3 vWorld; void main(){ vWorld = (modelMatrix * vec4(position,1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
             fragmentShader: fragment,
           },
         ]}
@@ -128,7 +151,7 @@ export function PlanetCanvas() {
   return (
     <div className="relative h-full w-full">
       <Canvas
-        gl={{ preserveDrawingBuffer: true }}
+        gl={{ preserveDrawingBuffer: true, toneMapping: NoToneMapping }}
         camera={{ position: [0, 0.4, 2.6], fov: 40 }}
         onCreated={({ gl }) => {
           setCanvas(gl.domElement);

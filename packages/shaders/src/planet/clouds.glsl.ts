@@ -7,7 +7,7 @@ import { simplexGlsl } from './simplex.glsl';
  * Original authors: Steven Worley (cellular noise). Aerion authors for the shell idea.
  * License: Worley algorithm is published; Aerion source was not copied line-for-line
  * because this file keeps a short march. Implementation is ExoForge code.
- * Adaptations: 3 shells, 4-tap Worley, fBm detail, one light sample.
+ * Adaptations: Worley frequency 8, tighter smoothstep so cloud edges stay sharp.
  */
 export const cloudsFrag = /* glsl */ `
 uniform float uCloudCoverage;
@@ -33,8 +33,8 @@ float worley(vec3 p) {
 void main() {
   vec3 p = normalize(vWorld);
   float density = 0.0;
-  density += smoothstep(0.45, 0.75, worley(p * 4.0 + vec3(uTime * 0.01, 0.0, 0.0)));
-  density += 0.6 * smoothstep(0.4, 0.8, fbm(p * 3.0 + vec3(0.0, uTime * 0.02, 1.0)));
+  density += smoothstep(0.55, 0.72, worley(p * 8.0 + vec3(uTime * 0.01, 0.0, 0.0)));
+  density += 0.6 * smoothstep(0.55, 0.7, fbm(p * 3.0 + vec3(0.0, uTime * 0.02, 1.0)));
   density += 0.35 * fbm(p * 8.0);
   density *= uCloudCoverage;
   float light = 0.55 + 0.45 * max(dot(p, normalize(vec3(1.0, 0.4, 0.2))), 0.0);
