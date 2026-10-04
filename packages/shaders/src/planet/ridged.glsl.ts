@@ -1,22 +1,32 @@
 /**
- * Ported from: ridged multifractal as described by F.K. Musgrave and summarized
- * alongside Inigo Quilez derivative noise: https://iquilezles.org/articles/morenoise/
- * Original author: Ken Musgrave (ridge), Inigo Quilez (article)
- * License: published descriptions; this loop is ExoForge code.
- * Adaptations: ridge = 1 - abs(noise), squared, 6 octaves. Not derivative morenoise.
- * TODO(manual): hydraulic erosion. No permissive single-file port was vendored.
+ * Ported from: fractal3 and terrainHeight (type 3, ridged) in
+ * dgreenheck/threejs-procedural-planets index.html noise-functions.
+ * Original author: David Greenheck.
+ * License: MIT.
+ * Adaptations: fixed Earth-like constants instead of the UI uniforms
+ * (amplitude, sharpness, period, persistence, lacunarity, octaves).
+ * Octaves capped at 6 so the loop stays static for WebGL1.
  */
 export const ridgedGlsl = /* glsl */ `
-float ridged(vec3 p) {
-  float sum = 0.0;
-  float amp = 0.5;
-  float freq = 1.0;
+float fractal3(vec3 v, float period, float persistence, float lacunarity) {
+  float n = 0.0;
+  float a = 1.0;
+  float maxAmp = 0.0;
+  float P = period;
   for (int i = 0; i < 6; i++) {
-    float n = 1.0 - abs(simplexNoise(p * freq) * 2.0 - 1.0);
-    sum += n * n * amp;
-    freq *= 2.05;
-    amp *= 0.5;
+    n += a * simplex3(v / P);
+    a *= persistence;
+    maxAmp += a;
+    P /= lacunarity;
   }
-  return sum;
+  return n / maxAmp;
+}
+float terrainHeight(vec3 v) {
+  float h = fractal3(v, 0.45, 0.5, 2.0);
+  h = 0.09 * pow(max(0.0, 1.0 - abs(h)), 2.2);
+  return max(0.0, h - 0.012);
+}
+float ridged(vec3 p) {
+  return terrainHeight(p);
 }
 `;

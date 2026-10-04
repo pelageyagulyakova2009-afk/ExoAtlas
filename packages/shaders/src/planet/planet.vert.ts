@@ -1,15 +1,13 @@
-import { domainWarpGlsl } from './domain_warp.glsl';
-import { fbmGlsl } from './fbm.glsl';
 import { normalGlsl } from './normal.glsl';
 import { ridgedGlsl } from './ridged.glsl';
 import { simplexGlsl } from './simplex.glsl';
 
 /**
- * Ported from: vertex displacement along the sphere normal, as in
- * dgreenheck/threejs-procedural-planets.
- * Original author: David Greenheck (structure). Height mix is ExoForge.
- * License: repository layout idea; formula assembled from the noise ports above.
- * Adaptations: domain-warped continents plus ridged mountains, analytic normal.
+ * Ported from: planet-vert-shader in dgreenheck/threejs-procedural-planets.
+ * Original author: David Greenheck.
+ * License: MIT.
+ * Adaptations: displacement is terrainHeight along the cube-sphere normal.
+ * Sea level still comes from uSeaLevel. Analytic normal stays local.
  */
 export const planetVert = /* glsl */ `
 uniform float uSeaLevel;
@@ -19,20 +17,15 @@ varying vec3 vNormal;
 varying float vHeight;
 varying vec2 vUvSphere;
 ${simplexGlsl}
-${fbmGlsl}
 ${ridgedGlsl}
-${domainWarpGlsl}
 float heightField(vec3 p) {
-  vec3 q = domainWarp(p * 1.7);
-  float continents = fbm(q) - 0.35;
-  float mountains = ridged(p * 3.5);
-  return continents * 0.12 + mountains * 0.045;
+  return terrainHeight(p * 2.2);
 }
 ${normalGlsl}
 void main() {
   vec3 p = normalize(position);
   float h = heightField(p);
-  vec3 displaced = p * (1.0 + max(h - uSeaLevel * 0.05, 0.0));
+  vec3 displaced = p * (1.0 + max(h - uSeaLevel * 0.04, 0.0));
   vHeight = h;
   vPosition = displaced;
   vNormal = analyticNormal(p);

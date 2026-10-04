@@ -1,10 +1,12 @@
 /**
  * Logarithmic spiral disk.
- * Ported from: Lin & Shu 1964 density-wave phase (theta grows with ln radius)
- * and the particle disk in beltoforion/Galaxy-Renderer-Typescript.
- * Original authors: C.C. Lin, Frank Shu; beltoforion (renderer structure).
- * License: the 1964 paper is the scientific source; this sampler is ExoForge code.
- * Adaptations: exponential radius pdf, bar as a central box of stars, pattern speed as a phase offset.
+ * Ported from: Lin & Shu 1964 density-wave phase, theta = ln(r) / tan(pitch).
+ * Star colors follow the blackbody split used by dgreenheck/webgpu-galaxy
+ * (hot blue arms, warm core). Positions are not copied from beltoforion.
+ * Original authors: C.C. Lin, Frank Shu. David Greenheck (color split).
+ * License: the 1964 equation is the scientific source. webgpu-galaxy is MIT;
+ * this sampler is a WebGL rewrite, not their TSL compute shaders.
+ * Adaptations: exponential radius pdf, bar as a central box, pattern speed as a phase.
  */
 
 export interface GalaxyBuild {

@@ -1,15 +1,17 @@
 /**
- * Dust lanes sit on the inner edge of the density wave.
- * Ported from: the dark-lane look of spiral galaxies; particles are placed in galaxy.ts.
- * Original author: n/a. Shader is ExoForge code.
- * License: project code.
- * Adaptations: dark multiply-friendly color so lanes stay darker than the arms.
+ * Ported from: the dark dust cloud sprites in dgreenheck/webgpu-galaxy.
+ * Original author: David Greenheck.
+ * License: MIT. WebGL point rewrite; their cloud is a textured plane.
+ * Adaptations: multiply-blend brown discs, coverage from uDustDensity.
+ * No WebGPU compute advection.
  */
 export const dustFrag = /* glsl */ `
 uniform float uDustDensity;
 void main() {
   vec2 uv = gl_PointCoord * 2.0 - 1.0;
-  if (dot(uv, uv) > 1.0) discard;
-  gl_FragColor = vec4(0.15, 0.08, 0.04, 0.85 * uDustDensity);
+  float d = dot(uv, uv);
+  if (d > 1.0) discard;
+  float alpha = exp(-d * 2.2) * 0.55 * uDustDensity;
+  gl_FragColor = vec4(0.08, 0.05, 0.03, alpha);
 }
 `;

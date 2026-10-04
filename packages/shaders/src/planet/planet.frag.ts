@@ -3,12 +3,12 @@ import { simplexGlsl } from './simplex.glsl';
 import { waterGlsl } from './water.glsl';
 
 /**
- * Biomes follow a Whittaker-style temperature/moisture split.
- * Ported from: the biome table described for procedural planets
- * (temperature + moisture + elevation), not a single copied shader.
- * Original author: Robert Whittaker (biome concept). Colors are ExoForge.
- * License: scientific classification; this blend is ExoForge code.
- * Adaptations: 11 named covers, Earth albedo when uUseEarth > 0.
+ * Lighting is the ambient + Lambert + height-faded specular from
+ * dgreenheck/threejs-procedural-planets planet-frag-shader.
+ * Original author: David Greenheck (lighting). Biome colors stay local.
+ * License: MIT.
+ * Adaptations: when uUseEarth > 0 the albedo is the NASA day map.
+ * Procedural covers still follow temperature, moisture, and elevation.
  */
 export const planetFrag = /* glsl */ `
 uniform float uSeaLevel;

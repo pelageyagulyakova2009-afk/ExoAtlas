@@ -11,7 +11,7 @@ import { useGalaxyStore } from '@/lib/galaxy/store';
 const dustVert = /* glsl */ `
 void main() {
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
-  gl_PointSize = 1.4 * (4.0 / -mv.z);
+  gl_PointSize = clamp(7.0 * (2.2 / -mv.z), 2.0, 18.0);
   gl_Position = projectionMatrix * mv;
 }
 `;
@@ -85,7 +85,7 @@ function Stars() {
         <sphereGeometry
           args={[Math.max(0.02, params.coreSize * 0.08), 16, 16]}
         />
-        <meshBasicMaterial color="#fffaf0" />
+        <meshBasicMaterial color="#ffe6c4" />
       </mesh>
     </group>
   );
