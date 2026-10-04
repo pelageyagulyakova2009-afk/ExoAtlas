@@ -12,13 +12,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LinearFilter,
   LinearMipmapLinearFilter,
+  BackSide,
+  FrontSide,
   NoToneMapping,
   SRGBColorSpace,
   type Mesh,
+  type Side,
   type Texture,
 } from 'three';
 import { buildPatch, MAX_LOD, selectPatches } from '@/lib/planet/lod';
 import { usePlanetStore } from '@/lib/planet/store';
+
+const SUN: [number, number, number] = [1, 0.35, 0.15];
 
 function Patches() {
   const params = usePlanetStore((s) => s.params);
@@ -53,7 +58,27 @@ function Patches() {
     const next = camera.position.length();
     setDistance((prev) => (Math.abs(prev - next) > 0.15 ? next : prev));
   });
-  const sun = [1, 0.35, 0.15] as const;
+  const sun = SUN;
+  const uniforms = useMemo(() => {
+    const initial = usePlanetStore.getState().params;
+    return {
+      uSeaLevel: { value: initial.seaLevel },
+      uTemperature: { value: initial.temperature },
+      uMoisture: { value: initial.moisture },
+      uUseEarth: { value: initial.useEarth },
+      uSunDir: { value: sun },
+      uTime: { value: 0 },
+      uDay: { value: day },
+      uNight: { value: night },
+    };
+  }, [day, night, sun]);
+  useFrame(() => {
+    const next = usePlanetStore.getState().params;
+    uniforms.uSeaLevel.value = next.seaLevel;
+    uniforms.uTemperature.value = next.temperature;
+    uniforms.uMoisture.value = next.moisture;
+    uniforms.uUseEarth.value = next.useEarth;
+  });
   return (
     <group rotation={[params.axialTilt, 0, 0]}>
       {patches.map((patch) => (
@@ -69,19 +94,9 @@ function Patches() {
             <bufferAttribute attach="index" args={[patch.indices, 1]} />
           </bufferGeometry>
           <shaderMaterial
-            key={`${params.seaLevel}-${params.temperature}-${params.moisture}-${params.useEarth}`}
             vertexShader={planetVert}
             fragmentShader={planetFrag}
-            uniforms={{
-              uSeaLevel: { value: params.seaLevel },
-              uTemperature: { value: params.temperature },
-              uMoisture: { value: params.moisture },
-              uUseEarth: { value: params.useEarth },
-              uSunDir: { value: sun },
-              uTime: { value: 0 },
-              uDay: { value: day },
-              uNight: { value: night },
-            }}
+            uniforms={uniforms}
           />
         </mesh>
       ))}
@@ -93,10 +108,12 @@ function Shell({
   scale,
   fragment,
   uniforms,
+  side,
 }: {
   scale: number;
   fragment: string;
   uniforms: Record<string, { value: unknown }>;
+  side: Side;
 }) {
   const mesh = useRef<Mesh>(null);
   useFrame(({ clock }) => {
@@ -108,8 +125,7 @@ function Shell({
       <shaderMaterial
         transparent
         depthWrite={false}
-        side={2}
-        key={JSON.stringify(uniforms)}
+        side={side}
         args={[
           {
             uniforms,
@@ -123,23 +139,37 @@ function Shell({
 }
 
 export function PlanetScene() {
-  const atmosphere = usePlanetStore((s) => s.params.atmosphereDensity);
-  const clouds = usePlanetStore((s) => s.params.cloudCoverage);
+  const cloudUniforms = useMemo(
+    () => ({ uCloudCoverage: { value: 0.5 }, uTime: { value: 0 } }),
+    [],
+  );
+  const atmosphereUniforms = useMemo(
+    () => ({
+      uAtmosphereDensity: { value: 1 },
+      uSun: { value: SUN },
+    }),
+    [],
+  );
+  useFrame(({ clock }) => {
+    const params = usePlanetStore.getState().params;
+    cloudUniforms.uCloudCoverage.value = params.cloudCoverage;
+    cloudUniforms.uTime.value = clock.elapsedTime;
+    atmosphereUniforms.uAtmosphereDensity.value = params.atmosphereDensity;
+  });
   return (
     <>
       <Patches />
       <Shell
-        scale={1.04}
+        scale={1.03}
         fragment={cloudsFrag}
-        uniforms={{ uCloudCoverage: { value: clouds }, uTime: { value: 0 } }}
+        side={FrontSide}
+        uniforms={cloudUniforms}
       />
       <Shell
-        scale={1.12}
+        scale={1.08}
         fragment={atmosphereFrag}
-        uniforms={{
-          uAtmosphereDensity: { value: atmosphere },
-          uSun: { value: [1, 0.35, 0.15] },
-        }}
+        side={BackSide}
+        uniforms={atmosphereUniforms}
       />
     </>
   );

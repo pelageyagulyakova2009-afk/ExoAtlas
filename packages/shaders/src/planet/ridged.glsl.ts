@@ -1,32 +1,29 @@
 /**
- * Ported from: fractal3 and terrainHeight (type 3, ridged) in
- * dgreenheck/threejs-procedural-planets index.html noise-functions.
- * Original author: David Greenheck.
+ * Ported from: RidgedNoise in NVB9ALT/NVB9ALT.github.io js/GradientNoise.js.
+ * Original author: NVB9ALT.
  * License: MIT.
- * Adaptations: fixed Earth-like constants instead of the UI uniforms
- * (amplitude, sharpness, period, persistence, lacunarity, octaves).
- * Octaves capped at 6 so the loop stays static for WebGL1.
+ * Adaptations: the base noise is simplex3 already in this package.
+ * Levels are 6 (their default is 16, too heavy per vertex on a cube-sphere).
+ * Domain warp of the sample point is applied by the caller.
  */
 export const ridgedGlsl = /* glsl */ `
-float fractal3(vec3 v, float period, float persistence, float lacunarity) {
-  float n = 0.0;
-  float a = 1.0;
-  float maxAmp = 0.0;
-  float P = period;
-  for (int i = 0; i < 6; i++) {
-    n += a * simplex3(v / P);
-    a *= persistence;
-    maxAmp += a;
-    P /= lacunarity;
+float ridgedNoise(vec3 p) {
+  float c = 0.0;
+  float weight = 1.0;
+  float gain = 2.0;
+  float amp = 0.5;
+  float res = 1.6;
+  for (int l = 0; l < 6; l++) {
+    res *= 2.0;
+    float noise = simplex3(p * res) * 0.5 + 0.5;
+    noise = abs(noise * 2.0 - 1.0);
+    noise = 1.0 - noise;
+    noise *= noise;
+    noise *= weight;
+    weight = clamp(noise * gain, 0.0, 1.0);
+    c += noise * amp;
+    amp /= 2.0;
   }
-  return n / maxAmp;
-}
-float terrainHeight(vec3 v) {
-  float h = fractal3(v, 0.45, 0.5, 2.0);
-  h = 0.09 * pow(max(0.0, 1.0 - abs(h)), 2.2);
-  return max(0.0, h - 0.012);
-}
-float ridged(vec3 p) {
-  return terrainHeight(p);
+  return c;
 }
 `;

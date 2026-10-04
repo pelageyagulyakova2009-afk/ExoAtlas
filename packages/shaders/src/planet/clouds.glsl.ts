@@ -1,75 +1,52 @@
 /**
- * Ported from: volumetric ray march, Beer-Lambert, and Henyey-Greenstein in
- * CK42BB/procedural-clouds-threejs cloud-shaders.md (volumetric_clouds.frag).
+ * Ported from: Beer-Lambert transmittance and Henyey-Greenstein in
+ * CK42BB/procedural-clouds-threejs cloud-shaders.md.
  * Original author: CK42BB.
  * License: MIT.
- * Adaptations: the march is a short shell around a unit sphere (24 steps,
- * 4 light steps) instead of a fullscreen sky. Coverage is uCloudCoverage.
- * Noise is the value-noise fbm from that file, not Worley.
+ * Adaptations: one shell on the unit sphere, 1 sample of fbm density.
+ * Alpha is the density itself. Empty space stays transparent so the
+ * disc is never painted black. Specular brightens the sun-facing side.
  */
 export const cloudsFrag = /* glsl */ `
 uniform float uCloudCoverage;
 uniform float uTime;
 varying vec3 vWorld;
-vec3 hash3(vec3 p) {
-  p = vec3(dot(p, vec3(127.1, 311.7, 74.7)), dot(p, vec3(269.5, 183.3, 246.1)), dot(p, vec3(113.5, 271.9, 124.6)));
-  return fract(sin(p) * 43758.5453);
+float hash(vec3 p) {
+  return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
 }
-float noise3D(vec3 p) {
+float noise(vec3 p) {
   vec3 i = floor(p);
   vec3 f = fract(p);
   f = f * f * (3.0 - 2.0 * f);
-  return mix(
-    mix(mix(dot(hash3(i), f), dot(hash3(i + vec3(1.0, 0.0, 0.0)), f - vec3(1.0, 0.0, 0.0)), f.x),
-        mix(dot(hash3(i + vec3(0.0, 1.0, 0.0)), f - vec3(0.0, 1.0, 0.0)), dot(hash3(i + vec3(1.0, 1.0, 0.0)), f - vec3(1.0, 1.0, 0.0)), f.x), f.y),
-    mix(mix(dot(hash3(i + vec3(0.0, 0.0, 1.0)), f - vec3(0.0, 0.0, 1.0)), dot(hash3(i + vec3(1.0, 0.0, 1.0)), f - vec3(1.0, 0.0, 1.0)), f.x),
-        mix(dot(hash3(i + vec3(0.0, 1.0, 1.0)), f - vec3(0.0, 1.0, 1.0)), dot(hash3(i + vec3(1.0, 1.0, 1.0)), f - vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+  return mix(mix(mix(hash(i), hash(i + vec3(1, 0, 0)), f.x), mix(hash(i + vec3(0, 1, 0)), hash(i + vec3(1, 1, 0)), f.x), f.y),
+             mix(mix(hash(i + vec3(0, 0, 1)), hash(i + vec3(1, 0, 1)), f.x), mix(hash(i + vec3(0, 1, 1)), hash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
 }
-float cloudFbm(vec3 p) {
-  float sum = 0.0;
-  float amp = 0.5;
+float fbm(vec3 p) {
+  float s = 0.0;
+  float a = 0.5;
   for (int i = 0; i < 4; i++) {
-    sum += noise3D(p) * amp;
+    s += a * noise(p);
     p *= 2.0;
-    amp *= 0.5;
+    a *= 0.5;
   }
-  return sum;
+  return s;
 }
-float henyeyGreenstein(float cosTheta, float g) {
+float hg(float mu) {
+  float g = 0.6;
   float g2 = g * g;
-  return (1.0 - g2) / (4.0 * 3.14159265 * pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5));
-}
-float cloudDensity(vec3 p) {
-  float h = length(p) - 1.015;
-  float shell = smoothstep(0.0, 0.012, h) * smoothstep(0.035, 0.012, h);
-  float n = cloudFbm(p * 3.5 + vec3(uTime * 0.01, 0.0, 0.0));
-  return shell * smoothstep(0.55 - uCloudCoverage * 0.25, 0.72, n) * uCloudCoverage;
+  return (1.0 - g2) / pow(1.0 + g2 - 2.0 * g * mu, 1.5);
 }
 void main() {
-  vec3 ro = cameraPosition;
-  vec3 rd = normalize(vWorld - cameraPosition);
-  float t = max(length(ro) - 1.06, 0.0);
+  vec3 p = normalize(vWorld);
   vec3 sun = normalize(vec3(1.0, 0.35, 0.15));
-  float trans = 1.0;
-  vec3 scatter = vec3(0.0);
-  float phase = henyeyGreenstein(dot(rd, sun), 0.6);
-  for (int i = 0; i < 24; i++) {
-    vec3 pos = ro + rd * t;
-    float d = cloudDensity(pos);
-    if (d > 0.001) {
-      float light = 0.0;
-      vec3 lp = pos;
-      for (int j = 0; j < 4; j++) {
-        lp += sun * 0.01;
-        light += cloudDensity(lp);
-      }
-      float beer = exp(-light * 1.4) * exp(-d * 0.08);
-      scatter += trans * d * beer * phase * vec3(1.0, 0.98, 0.95);
-      trans *= exp(-d * 0.12);
-    }
-    t += 0.012;
-    if (trans < 0.05 || length(pos) < 0.99) break;
-  }
-  gl_FragColor = vec4(scatter, clamp(1.0 - trans, 0.0, 0.9));
+  float n = fbm(p * 4.0 + vec3(uTime * 0.02, 0.0, 0.4));
+  float threshold = mix(0.72, 0.42, clamp(uCloudCoverage, 0.0, 1.0));
+  float density = smoothstep(threshold, threshold + 0.12, n) * uCloudCoverage;
+  float beer = exp(-density * 1.2);
+  float mu = dot(p, sun);
+  float light = beer * (0.45 + 0.55 * smoothstep(-0.2, 0.6, mu)) * hg(mu);
+  vec3 color = vec3(0.95, 0.97, 1.0) * light;
+  if (density < 0.02) discard;
+  gl_FragColor = vec4(color, clamp(density * 0.85, 0.0, 0.8));
 }
 `;

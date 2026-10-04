@@ -1,13 +1,16 @@
+import { domainWarpGlsl } from './domain_warp.glsl';
+import { fbmGlsl } from './fbm.glsl';
 import { normalGlsl } from './normal.glsl';
 import { ridgedGlsl } from './ridged.glsl';
 import { simplexGlsl } from './simplex.glsl';
 
 /**
- * Ported from: planet-vert-shader in dgreenheck/threejs-procedural-planets.
- * Original author: David Greenheck.
+ * Ported from: RidgedNoise displacement in NVB9ALT GradientNoise.js
+ * and domain warping as used for continents in ZyFou/ProceduralTerrains.
+ * Original authors: NVB9ALT; ZyFou (warp on the sphere).
  * License: MIT.
- * Adaptations: displacement is terrainHeight along the cube-sphere normal.
- * Sea level still comes from uSeaLevel. Analytic normal stays local.
+ * Adaptations: warp then ridged height along the cube-sphere normal.
+ * uSeaLevel flattens everything below the shoreline.
  */
 export const planetVert = /* glsl */ `
 uniform float uSeaLevel;
@@ -17,15 +20,19 @@ varying vec3 vNormal;
 varying float vHeight;
 varying vec2 vUvSphere;
 ${simplexGlsl}
+${fbmGlsl}
+${domainWarpGlsl}
 ${ridgedGlsl}
 float heightField(vec3 p) {
-  return terrainHeight(p * 2.2);
+  vec3 q = domainWarp(p * 1.4);
+  return ridgedNoise(q) * 0.08;
 }
 ${normalGlsl}
 void main() {
   vec3 p = normalize(position);
   float h = heightField(p);
-  vec3 displaced = p * (1.0 + max(h - uSeaLevel * 0.04, 0.0));
+  float land = max(h - uSeaLevel * 0.06, 0.0);
+  vec3 displaced = p * (1.0 + land);
   vHeight = h;
   vPosition = displaced;
   vNormal = analyticNormal(p);
