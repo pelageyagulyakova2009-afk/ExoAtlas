@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LabelPanel } from '@/components/annotate/LabelPanel';
 import { LabeledSlider, Section } from '@/components/ui/Controls';
 import { GALAXY_PRESETS } from '@/lib/galaxy/params';
 import { useGalaxyStore } from '@/lib/galaxy/store';
@@ -89,7 +88,6 @@ export function GalaxyControls({ seed }: { seed: number }) {
           onChange={(v) => setParam('patternSpeed', v)}
         />
       </Section>
-      <LabelPanel />
     </aside>
   );
 }

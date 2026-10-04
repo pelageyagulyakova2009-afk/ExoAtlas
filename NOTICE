@@ -1,0 +1,5 @@
+UI shell files under apps/web/components/ui, apps/web/components/shell,
+and apps/web/middleware.ts are adapted from MAY55A/SciBitHub
+(https://github.com/MAY55A/SciBitHub), GNU AGPL-3.0.
+Those files keep their own license headers. The rest of ExoForge is not
+relicensed by this notice.

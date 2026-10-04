@@ -2,7 +2,6 @@
 
 import type { PlanetParams } from '@exoforge/types';
 import { useRouter } from 'next/navigation';
-import { LabelPanel } from '@/components/annotate/LabelPanel';
 import { LabeledSlider, Section } from '@/components/ui/Controls';
 import { PLANET_PRESETS } from '@/lib/planet/presets';
 import { usePlanetStore } from '@/lib/planet/store';
@@ -88,7 +87,6 @@ export function PlanetControls({ seed }: { seed: number }) {
       >
         Reset all
       </button>
-      <LabelPanel />
     </aside>
   );
 }

@@ -26,6 +26,12 @@ export default function HomePage() {
         </Link>
         <Link
           className="rounded border border-slate-600 px-4 py-2"
+          href="/annotate"
+        >
+          Annotate
+        </Link>
+        <Link
+          className="rounded border border-slate-600 px-4 py-2"
           href="/dashboard"
         >
           Impact
