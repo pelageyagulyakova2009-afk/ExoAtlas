@@ -38,7 +38,7 @@ float hg(float mu) {
 }
 void main() {
   vec3 p = normalize(vWorld);
-  vec3 sun = normalize(vec3(1.0, 0.35, 0.15));
+  vec3 sun = normalize(vec3(0.25, 0.35, 1.0));
   float n = fbm(p * 4.0 + vec3(uTime * 0.02, 0.0, 0.4));
   float threshold = mix(0.72, 0.42, clamp(uCloudCoverage, 0.0, 1.0));
   float density = smoothstep(threshold, threshold + 0.12, n) * uCloudCoverage;

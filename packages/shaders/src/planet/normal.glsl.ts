@@ -14,6 +14,6 @@ vec3 analyticNormal(vec3 p) {
   float hx = heightField(normalize(p + vec3(e, 0.0, 0.0)));
   float hy = heightField(normalize(p + vec3(0.0, e, 0.0)));
   float hz = heightField(normalize(p + vec3(0.0, 0.0, e)));
-  return normalize(p + vec3(h - hx, h - hy, h - hz) * 40.0);
+  return normalize(p + vec3(h - hx, h - hy, h - hz) * 4.0);
 }
 `;

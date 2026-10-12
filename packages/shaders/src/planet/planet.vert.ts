@@ -14,6 +14,7 @@ import { simplexGlsl } from './simplex.glsl';
  */
 export const planetVert = /* glsl */ `
 uniform float uSeaLevel;
+uniform float uUseEarth;
 uniform float uTime;
 varying vec3 vPosition;
 varying vec3 vNormal;
@@ -32,6 +33,7 @@ void main() {
   vec3 p = normalize(position);
   float h = heightField(p);
   float land = max(h - uSeaLevel * 0.06, 0.0);
+  land *= 1.0 - step(0.5, uUseEarth);
   vec3 displaced = p * (1.0 + land);
   vHeight = h;
   vPosition = displaced;

@@ -28,11 +28,12 @@ ${simplexGlsl}
 ${waterGlsl}
 ${nightLightsGlsl}
 void main() {
-  vec3 n = normalize(vNormal);
+  vec3 geo = normalize(vPosition);
+  vec3 n = normalize(mix(geo, normalize(vNormal), 0.2));
   vec3 sun = normalize(uSunDir);
-  float ndl = dot(n, sun);
+  float ndl = dot(geo, sun);
   float day = smoothstep(-0.15, 0.25, ndl);
-  vec3 ambient = vec3(0.05, 0.07, 0.12);
+  vec3 ambient = vec3(0.16, 0.2, 0.28);
   float lat = abs(normalize(vPosition).y);
   float temp = clamp(uTemperature * (1.0 - lat * 0.75) + (1.0 - lat) * 0.15, 0.0, 1.0);
   float moist = clamp(uMoisture, 0.0, 1.0);
@@ -72,11 +73,12 @@ void main() {
   vec3 albedo = mix(ocean, land, shore);
   albedo = mix(albedo, coast, shore * (1.0 - shore) * 4.0);
   vec3 earth = texture2D(uDay, vUvSphere).rgb;
-  albedo = mix(albedo, earth, step(0.5, uUseEarth));
+  albedo = mix(albedo, earth * 1.35, step(0.5, uUseEarth));
   vec3 viewDir = normalize(cameraPosition - vPosition);
-  float waterMask = 1.0 - shore;
+  float waterMask = (1.0 - shore) * (1.0 - step(0.5, uUseEarth));
   float spec = waterSpecular(n, viewDir, sun) * waterMask * day;
-  vec3 color = albedo * (ambient + vec3(1.0, 0.97, 0.9) * day);
+  vec3 color = albedo * (ambient + vec3(1.05) * day);
+  color = mix(color, earth * (0.35 + 0.95 * day), step(0.5, uUseEarth));
   color += vec3(1.0, 0.95, 0.85) * spec * 0.65;
   color += nightLights(vPosition, sun, h, vUvSphere) * (1.0 - day);
   gl_FragColor = vec4(color, 1.0);

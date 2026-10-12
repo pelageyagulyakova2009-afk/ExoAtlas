@@ -23,7 +23,7 @@ import {
 import { buildPatch, MAX_LOD, selectPatches } from '@/lib/planet/lod';
 import { usePlanetStore } from '@/lib/planet/store';
 
-const SUN: [number, number, number] = [1, 0.35, 0.15];
+const SUN: [number, number, number] = [0.25, 0.35, 1];
 
 function Patches() {
   const params = usePlanetStore((s) => s.params);
@@ -166,7 +166,7 @@ export function PlanetScene() {
         uniforms={cloudUniforms}
       />
       <Shell
-        scale={1.08}
+        scale={1.025}
         fragment={atmosphereFrag}
         side={BackSide}
         uniforms={atmosphereUniforms}
@@ -182,7 +182,7 @@ export function PlanetCanvas() {
     <div className="relative h-full w-full">
       <Canvas
         gl={{ preserveDrawingBuffer: true, toneMapping: NoToneMapping }}
-        camera={{ position: [0, 0.4, 2.6], fov: 40 }}
+        camera={{ position: [0, 0.35, 3.2], fov: 35 }}
         onCreated={({ gl }) => {
           setCanvas(gl.domElement);
         }}

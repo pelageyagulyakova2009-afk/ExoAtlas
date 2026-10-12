@@ -42,9 +42,9 @@ void main() {
     vec3 attn = exp(-(betaR * opticalR + vec3(betaM * opticalM)));
     scatter += attn * od;
   }
-  vec3 color = scatter * (betaR * rayleighPhase(mu) + vec3(betaM) * miePhase(mu));
-  color *= 1.0 + rim * 2.5;
-  float alpha = clamp(rim * density * 1.4 + max(color.b, 0.0), 0.0, 0.85);
-  gl_FragColor = vec4(color * 4.0, alpha);
+  vec3 color = vec3(0.25, 0.5, 1.0) * rayleighPhase(mu) + vec3(0.6, 0.7, 0.8) * miePhase(mu);
+  color *= scatter * density;
+  float alpha = pow(rim, 3.0) * clamp(density, 0.0, 1.2) * 0.85;
+  gl_FragColor = vec4(color, alpha);
 }
 `;
